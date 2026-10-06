@@ -37,12 +37,14 @@ if step<1
     step = 1;
 end
 
-% Le coordinate vengono disegnate SENZA modifiche (niente "trick"
-% vXe = -vXe - min(-vXe), che spostava l'origine in x = max(vXe) e
-% falsava i valori sugli assi). Per vedere la terna NED con la quota
-% verso l'alto si invertono gli assi Y e Z del grafico (vedi in fondo):
-% e' una rotazione di 180 gradi attorno a x, quindi la terna resta
-% destrorsa e l'assetto del velivolo non va corretto.
+% Le coordinate x e y vengono disegnate SENZA modifiche (niente "trick"
+% vXe = -vXe - min(-vXe), che spostava l'origine in x = max(vXe)).
+% Sull'asse verticale si disegna la quota h = -z_E (positiva verso l'alto).
+% Il passaggio (x,y,z) -> (x,y,h) e' una riflessione: per non vedere
+% l'aereo "specchiato" si inverte anche l'asse Y del grafico (vedi in fondo),
+% cosi' il risultato visivo e' una rotazione di 180 gradi attorno a x.
+vHe = -vZe;                 % quota (m)
+Tph = diag([1 1 -1]);       % da assi Earth (NED) ad assi del grafico (x,y,h)
 
 %% Misc.
 movie   = nargout;
@@ -67,7 +69,7 @@ for i=1:step:(length(vXe)-usr_modulo)
     
     if movie || (i == 1)
         clf(h_fig);
-        plot3(vXe,vYe,vZe);
+        plot3(vXe,vYe,vHe);
         grid on;
         hold on;
         light;
@@ -79,17 +81,17 @@ for i=1:step:(length(vXe)-usr_modulo)
     Teb = Tbe';
             
     %% Vertices in Earth-axis coordinates
-    Vb = Teb*V';
+    Vb = Tph*Teb*V';
     Vb = Vb';
     
-    P_on_traj = [vXe(i) vYe(i) vZe(i)];
+    P_on_traj = [vXe(i) vYe(i) vHe(i)];
     X0 = repmat(P_on_traj,size(Vb,1),1);
     Vb = Vb + X0;
 
     %% plot body-axes
-    Xb = transpose( (2/scale_factor)*Teb*[1;0;0] ); % CG-to-fuselage nose
-    Yb = transpose( (2/scale_factor)*Teb*[0;1;0] ); % CG-to-right wing
-    Zb = transpose( (2/scale_factor)*Teb*[0;0;1] ); % Pilot's head-to-feet direction
+    Xb = transpose( (2/scale_factor)*Tph*Teb*[1;0;0] ); % CG-to-fuselage nose
+    Yb = transpose( (2/scale_factor)*Tph*Teb*[0;1;0] ); % CG-to-right wing
+    Zb = transpose( (2/scale_factor)*Tph*Teb*[0;0;1] ); % Pilot's head-to-feet direction
     quiver3( ...
         P_on_traj(1),P_on_traj(2),P_on_traj(3), ...
         Xb(1),Xb(2),Xb(3), ...
@@ -138,14 +140,14 @@ plot3([max(vXe) max(vXe)]*1.1, [min(vYe) max(vYe)]*1.1, [0 0], 'color', ones(3,1
 plot3([min(vXe) min(vXe)]*1.1, [min(vYe) max(vYe)]*1.1, [0 0], 'color', ones(3,1)*.8);
 
 % curves (ones(...) invece di vYe./vYe: con y = 0 dava NaN e la curva spariva)
-plot3(vXe, vYe, ones(size(vZe))*max(vZe), '-', 'color', [.5 .5 .5]) % Ground Track
-plot3(vXe, ones(size(vYe))*min(vYe), vZe, '-', 'color', [.5 .5 .5]) % Trajectory in a vertical plane
-plot3(vXe, vYe, vZe, 'k', 'linewidth', 1.4); % 3D trajectory
+plot3(vXe, vYe, ones(size(vHe))*min(vHe), '-', 'color', [.5 .5 .5]) % Ground Track
+plot3(vXe, ones(size(vYe))*min(vYe), vHe, '-', 'color', [.5 .5 .5]) % Trajectory in a vertical plane
+plot3(vXe, vYe, vHe, 'k', 'linewidth', 1.4); % 3D trajectory
 
 lighting phong;
 daspect([1 1 1]);
 
-xlabel('x_E'); ylabel('y_E'); zlabel('z_E');
+xlabel('x_E'); ylabel('y_E'); zlabel('h = -z_E');
 
 %% Plot Earth axes
 quiver3( ...
@@ -160,18 +162,16 @@ quiver3( ...
 ); hold on;
 quiver3( ...
     0,0,0, ...
-    0,0,max([abs(max(vZe)),0.18*abs(max(vXe))]), ...
+    0,0,-max([abs(min(vHe)),0.18*abs(max(vXe))]), ... % z_E punta verso il basso
     'b','linewidth',2.5 ...
 ); hold on;
 
 xlim([min([min([-0.05*abs(max(vXe)),1.1*min(vXe)]),0]), max([1.1*max(vXe),1])]);
 ylim([min([min([-0.05*abs(max(vYe)),1.1*min(vYe)]),0]), max([1.1*max(vYe),1])]);
-zlim([min([min([-0.05*abs(max(vZe)),1.1*min(vZe)]),0]), max([max([abs(max(vZe)),0.2*abs(max(vXe))]),1])]);
+zlim([min([min(vHe), 0]), max([1.1*max(vHe), 1])]);
 
-% NED: z verso il basso -> si inverte Z per avere la quota verso l'alto;
-% si inverte anche Y per mantenere la terna destrorsa (rotazione di 180 gradi attorno a x)
+% Asse Y invertito per compensare la riflessione z -> h (vedi sopra)
 set(gca,'YDir','reverse');
-set(gca,'ZDir','reverse');
 
 cd (cur_dir);
 end

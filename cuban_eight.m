@@ -170,9 +170,9 @@ plotTrajectoryAndBody(h_fig6,vXe,vYe,vZe,vQuat,scaleFactor,step,theView);
 
 figure(h_fig6);
 title('Traiettoria Cuban Eight');
-xlabel('x_E (m)'); ylabel('y_E (m)'); zlabel('z_E (m)');
+xlabel('x_E (m)'); ylabel('y_E (m)'); zlabel('h = -z_E (m)');
 xlim([min(vXe)-300, max(vXe)+300]);   % prima era min(vXe)+300: tagliava l'inizio
 ylim([-800 800]);
-zlim([min(vZe)-300, max(vZe)+300]);
+zlim([min(-vZe)-300, max(-vZe)+300]);   % quota h = -z_E
 daspect([1 1 1]);
 view(theView);
