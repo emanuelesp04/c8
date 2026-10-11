@@ -171,8 +171,22 @@ plotTrajectoryAndBody(h_fig6,vXe,vYe,vZe,vQuat,scaleFactor,step,theView);
 figure(h_fig6);
 title('Traiettoria Cuban Eight');
 xlabel('x_E (m)'); ylabel('y_E (m)'); zlabel('h = -z_E (m)');
+hold on;
+
+% Assi NED con origine nel punto iniziale della traiettoria.
+% Il grafico usa le coordinate (x, y, h = -z_E), quindi:
+%   N = +x_E -> [L 0 0],  E = +y_E -> [0 L 0],  D = +z_E -> [0 0 -L] (quota che scende)
+L = 300;                                   % lunghezza delle frecce (m)
+O = [vXe(1), vYe(1), -vZe(1)];             % origine (x, y, h)
+quiver3(O(1),O(2),O(3), L,0,0, 0, 'r', 'LineWidth',2, 'MaxHeadSize',0.5); % N
+quiver3(O(1),O(2),O(3), 0,L,0, 0, 'g', 'LineWidth',2, 'MaxHeadSize',0.5); % E
+quiver3(O(1),O(2),O(3), 0,0,-L, 0, 'b', 'LineWidth',2, 'MaxHeadSize',0.5); % D
+text(O(1)+1.1*L, O(2),         O(3),         'N', 'Color','r', 'FontWeight','bold');
+text(O(1),         O(2)+1.1*L, O(3),         'E', 'Color','g', 'FontWeight','bold');
+text(O(1),         O(2),         O(3)-1.1*L, 'D', 'Color','b', 'FontWeight','bold');
+
 xlim([min(vXe)-300, max(vXe)+300]);   % prima era min(vXe)+300: tagliava l'inizio
 ylim([-800 800]);
-zlim([min(-vZe)-300, max(-vZe)+300]);   % quota h = -z_E
+zlim([min([-vZe; O(3)-1.2*L])-100, max(-vZe)+300]);   % quota h = -z_E, freccia D inclusa
 daspect([1 1 1]);
 view(theView);
