@@ -164,10 +164,24 @@ h_fig6 = figure(6);
 grid on;
 theView = [1,1,0.5];
 scaleFactor = 0.008;
-step = 20;
 
-plotTrajectoryAndBody(h_fig6,vXe,vYe,vZe,vQuat,scaleFactor,step,theView);
+% ode45 restituisce istanti NON equispaziati (passi piccoli dove p e q
+% cambiano, grandi altrove): campionando ogni <step> punti i velivoli si
+% addensano. Si ricampiona su una griglia temporale uniforme: con u costante
+% i velivoli risultano equidistanti lungo la traiettoria.
+nBody = 18;                          % numero di velivoli da disegnare
+step  = 20;                          % punti di traiettoria tra due velivoli
+tPlot = linspace(0, t_fin, nBody*step + 1)';
 
+vXp = interp1(vTime, vXe, tPlot, 'spline');
+vYp = interp1(vTime, vYe, tPlot, 'spline');
+vZp = interp1(vTime, vZe, tPlot, 'spline');
+vQuatP = interp1(vTime, vQuat, tPlot);           % interpolazione lineare...
+vQuatP = vQuatP ./ vecnorm(vQuatP, 2, 2);        % ...e rinormalizzazione
+
+plotTrajectoryAndBody(h_fig6,vXp,vYp,vZp,vQuatP,scaleFactor,step,theView);
+
+% Titolo ed etichette DOPO la funzione (che fa clf e li cancellerebbe)
 figure(h_fig6);
 title('Traiettoria Cuban Eight');
 xlabel('x_E (m)'); ylabel('y_E (m)'); zlabel('h = -z_E (m)');
